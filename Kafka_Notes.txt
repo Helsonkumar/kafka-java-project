@@ -1,0 +1,122 @@
+What problem does solves:
+Kafka was originally invented to the problem in Lined to ingest large volume of event data from linked website
+with low latency and with good data delivery guarantees.
+
+Kafka : as a Log Data Structure. Tbis is powerfull for bigData ingestion
+
+But What kafa does not do :  Diff between kafka and the message brokers.
+Kafka message do not have message id. Messages are identified with their offet within thr partitions,
+kakfa does not keeps track of what messages have beeb consumed by the consumer.
+
+Because of the above limitations with conventional Queues : Kafka can have some optimization.
+
+1. There is no index of messages being maintained.
+2. No random acess of data from partiton by the consumer.
+3. There are no deletes.
+4.No  bufefering at user end.
+
+
+Kafka vs RabbitMQ :
+=====================
+Message Broker
+Event Source (Kafka Excels)
+
+Are the main use cases for which these 2 tools can wbe utilized.
+
+Rabbit  MQ : 
+=============
+Brokers keep track of the message consumed by the consumer. It is also distributed.
+Cretaed to implement AMQP protocol of message exchange.
+Not for High volume and real time data wprocessing
+Retains ony unread messages
+In dependent of external servcies
+AMQP or any other protocol driven
+Complex routing logic
+Rabbit MQ can address the use case of Kafka wbut with additinal software
+It needs additonal plugin to act as kafka (like cassandra for message replay,etc)
+Finer grained consistency on per message basis
+Throughput is not that great
+
+
+
+Kafka:
+=========
+Designed for low latency high volume of Event data
+Durable and fast and scalable
+It is a durable log store.
+Kafka does not tracks the message read by the consumers
+Depends on servcies like ZooKeeper
+Solves the messy integration problem
+100k/sec : is the basic reason why people choose kafka
+so the throughput is better.
+
+
+Use case :
+------------ 
+Stream from A to B w/o complex routing.With max throughput delivered in partitoned order AT LEAST ONCE
+When u need the stream  history of data. Data can be replayed unlike Rabbit MQ
+Event Sourcing
+Not suited for certain use cases like request/ reply , p2p messaging layer,etc
+
+
+===============================================================================================================================
+Side notes :
+===============================================================================================================================
+Netflix process around ~500 billion events per day
+Around ~8 Million events per seocond at peak times
+
+Think of materialized view and normal View.
+Materialized view has the resutset cached leading some un updated data , but easy to accesss at the cost of extra storage space in mempry.
+Mat.views are updated only periodically and index canw be  built on any column unlike normal view where index are built onlhy on the orginal columns
+Mat.view is mainly used in D/W technologies.
+
+Think of write intensive and read intensive workloads
+
+SMACK : Spark + Mesos + Akka + Cassandra + Kafka => CQRS (Command Query Responsibility Seperation)
+
+===============================================================================================================================
+
+Kafka CLI Command Samples:
+-----------------------------------------
+zookeeper-server-start C:\Users\DELL\Others\Kafka\config\zookeeper.properties
+kafka-server-start C:\Users\DELL\Others\Kafka\config\server.properties
+
+kafka-topics --create --topic test-topic --zookeeper localhost:2181 --replication-factor 3 --partitions 3
+
+kafka-console-producer --broker-list 127.0.0.1:9092 --topic test
+
+kafka-console-consumer --bootstrap-server localhost:9092 --topic twitter_topic --from-beginning
+
+kafka-consumer-groups --bootstrap-server localhost:9092 --group Consumer-Group-1 --describe
+
+===============================================================================================================================
+Things to be checked:
+
+1. How to alter a topic for diff partitons after being created.
+2. producer.flush() / close() would flush all the message which the producer holds in its memory.
+3. Think of how producer message delivery failure is handled.
+===============================================================================================================================
+Kafka Tutorial Notes:
+
+1*. ack-0/1/all . ack=all must be used in conjuction with min.insync.replcias 
+By default all the ISR expected to have the data written in their node.
+But ack=all with """min.insync.replcias = n""",  denotes the minimum number of nodes which must have the data replciated in their disk.
+Else the producer.send method will result in expection from the broker. IOn this exception prducer would retry to send the message (this rety is confgurable)
+In the latest version of kafka , producer would retry for """2147483647""" (whihc is ahuge number).
+This is based on """retry.backout.ms = 100ms""" (for every 100 ms producer would retry to send the message until that huge count is reached.)
+But is this also backed by """delivery.timeout.ms = 2 min""" (producer would try resending for 2 min. Aftre that it would stop)
+This is to handle the producer failure in message delievery.
+
+But retrying to send the message might result in messages being sent out of order.
+Because in kafka we can send messages  in paralled via multiple producer instances.
+This is controlled by  : max.inflight.request.per.connection => how many producer requests can be made parallel for a single connection ot the cluster.
+If this parameter is made to "1" then it would impact the throughput.
+So check that ne wisely.
+
+
+2*.
+
+
+
+
+
