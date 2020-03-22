@@ -95,6 +95,7 @@ Things to be checked:
 1. How to alter a topic for diff partitons after being created.
 2. producer.flush() / close() would flush all the message which the producer holds in its memory.
 3. Think of how producer message delivery failure is handled.
+4. Producer retries
 ===============================================================================================================================
 Kafka Tutorial Notes:
 
@@ -111,10 +112,13 @@ But retrying to send the message might result in messages being sent out of orde
 Because in kafka we can send messages  in paralled via multiple producer instances.
 This is controlled by  : max.inflight.request.per.connection => how many producer requests can be made parallel for a single connection ot the cluster.
 If this parameter is made to "1" then it would impact the throughput.
-So check that ne wisely.
+So check that one  wisely.
 
 
-2*.
+2*.Idempotent producer  : A producer message is commited at the broker end only once. Even of the producer retries to send the message foe amultiple times since it had not received ack, the broker would 
+find the producer.rquest.id and checks if this is already commited. So if this is already commited then the broker would not commit the message as duplicate.
+This is called idempotent producer.
+To acheive this  : **** producerProps.put("enable.idempotence", true) ****
 
 
 
