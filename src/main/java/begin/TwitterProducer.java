@@ -107,14 +107,17 @@ public class TwitterProducer {
 		prop.setProperty(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 		prop.setProperty(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, StringSerializer.class.getName());
 
-		
-		//Safe Producer config
+		// Safe Producer config
 		prop.setProperty(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
 		prop.setProperty(ProducerConfig.MAX_IN_FLIGHT_REQUESTS_PER_CONNECTION, "5");
 		prop.setProperty(ProducerConfig.RETRIES_CONFIG, Integer.toString(Integer.MAX_VALUE));
 		prop.setProperty(ProducerConfig.ACKS_CONFIG, "all");
-		
-		
+
+		// High Throughput producer config
+		prop.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+		prop.setProperty(ProducerConfig.LINGER_MS_CONFIG, "20");
+		prop.setProperty(ProducerConfig.BATCH_SIZE_CONFIG, Integer.toString(32 * 1024));
+
 		KafkaProducer<String, String> producer = new KafkaProducer<String, String>(prop);
 		return producer;
 	}

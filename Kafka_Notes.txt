@@ -109,16 +109,35 @@ But is this also backed by """delivery.timeout.ms = 2 min""" (producer would try
 This is to handle the producer failure in message delievery.
 
 But retrying to send the message might result in messages being sent out of order.
-Because in kafka we can send messages  in paralled via multiple producer instances.
-This is controlled by  : max.inflight.request.per.connection => how many producer requests can be made parallel for a single connection ot the cluster.
+Because in kafka we can send messages  in paralle via multiple producer instances.
+This is controlled by  : """max.inflight.request.per.connection""" => how many producer requests can be made parallel for a single connection ot the cluster.
 If this parameter is made to "1" then it would impact the throughput.
-So check that one  wisely.
+So check that one  wisely. 
+
 
 
 2*.Idempotent producer  : A producer message is commited at the broker end only once. Even of the producer retries to send the message foe amultiple times since it had not received ack, the broker would 
 find the producer.rquest.id and checks if this is already commited. So if this is already commited then the broker would not commit the message as duplicate.
 This is called idempotent producer.
 To acheive this  : **** producerProps.put("enable.idempotence", true) ****
+
+
+3*. Kafka Producer Compression :
+Compression.type => snappy / lzip / Gzip4(which is time consuming : so not effective). Results in hig throughput
+Design decision on which codec to choose from. Check out the below blog
+https://blog.cloudflare.com/squeezing-the-firehose/
+
+4*. Producer Batching : 
+Kakfa objective is to reducet eh latency and increase thr throughput of the message delievry.
+max.inflight.request = 5 (means that maximum of 5 producer request can be sent individually at the same time) in parallel
+But whilst these messages are sent in parallel rest of the messages can be batched up together.
+This is decided by 2 configs:
+"""linger.ms""" => (0 by default) that is the time for which the producer must wait before sending the message. This might result in latency in consumer side since the messages are not deliver rite ASAP.
+"""batch.size""" => (16KB  default) size of the message batch. Whne the batch is full before the liner.ms  : producer would send those messgaes.
+This is set per -->partition level<--. So make sure U dont set it to high value. Otherwise we will run OOM.
+
+
+
 
 
 
