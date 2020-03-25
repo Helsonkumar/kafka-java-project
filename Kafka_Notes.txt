@@ -136,7 +136,15 @@ This is decided by 2 configs:
 """batch.size""" => (16KB  default) size of the message batch. Whne the batch is full before the liner.ms  : producer would send those messgaes.
 This is set per -->partition level<--. So make sure U dont set it to high value. Otherwise we will run OOM.
 
+5. Prationing algorithms:
+"""murmur2""" algorithm is used for partitoning when the key is given. 
+Else we can write our own partitoning algorithm and inject via the config param  """partitioner.class"""
 
+6.Advanced config :
+Producer messages are always buffered before sending to broker. This is also the case when the producer rate is faster than the broker's acceptance rate.
+So """buffer.memory""" => (32MB default) would be used.
+But when theis biffere is full or the producer is not able to drop messages to this buffer then the producer.send method will be locked for configured milli seconds.
+"""max.block.ms""" => 60000(60 ms). When this time is elapsed then producer will be down or throw exception.
 
 
 
