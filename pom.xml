@@ -12,5 +12,6 @@
 	<modules>
 		<module>kafka-basics</module>
 		<module>kafka-twitter</module>
+		<module>elastic-consumer</module>
 	</modules>
 </project>

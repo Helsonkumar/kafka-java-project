@@ -31,7 +31,7 @@ public class TwitterProducer {
 
 	static BlockingQueue<String> msgQueue = new LinkedBlockingQueue<String>(100000);
 
-	@SuppressWarnings("unchecked")
+	
 	public static void main(String[] args) {
 
 		String consumerKey = "DctvGGcq4412aTwImdSqddj5Z";
@@ -86,7 +86,7 @@ public class TwitterProducer {
 		Hosts hosebirdHosts = new HttpHosts(Constants.STREAM_HOST);
 		StatusesFilterEndpoint hosebirdEndpoint = new StatusesFilterEndpoint();
 
-		List<String> terms = Lists.newArrayList("Coronavirus");
+		List<String> terms = Lists.newArrayList("Prince Charles");
 		hosebirdEndpoint.trackTerms(terms);
 
 		Authentication hosebirdAuth = new OAuth1(consumerKey, consumerSecret, token, secret);
@@ -114,12 +114,10 @@ public class TwitterProducer {
 		prop.setProperty(ProducerConfig.ACKS_CONFIG, "all");
 
 		// High Throughput producer config
-		
-		  prop.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
-		  prop.setProperty(ProducerConfig.LINGER_MS_CONFIG, "20");
-		  prop.setProperty(ProducerConfig.BATCH_SIZE_CONFIG, Integer.toString(32 *
-		  1024));
-		 
+
+		prop.setProperty(ProducerConfig.COMPRESSION_TYPE_CONFIG, "snappy");
+		prop.setProperty(ProducerConfig.LINGER_MS_CONFIG, "20");
+		prop.setProperty(ProducerConfig.BATCH_SIZE_CONFIG, Integer.toString(32 * 1024));
 
 		KafkaProducer<String, String> producer = new KafkaProducer<String, String>(prop);
 		return producer;
