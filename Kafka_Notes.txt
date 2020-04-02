@@ -90,6 +90,40 @@ kafka-console-consumer --bootstrap-server localhost:9092 --topic twitter_topic -
 kafka-consumer-groups --bootstrap-server localhost:9092 --group Consumer-Group-1 --describe
 
 ===============================================================================================================================
+
+Elastic Search:
+--------------------------------------------
+
+GET /_cat/indices?v
+
+/helson_twitter/_search : gives all the records in the indices : gives the indices defined 
+
+GET /helson_twitter/tweet/gfgvO3EBmBN2c-s9TOmg : gives the specific record with the key
+
+/helson_twitter/_count?q=is_quote_status: false : runs the given query 
+
+
+/helson_twitter/_delete_by_query?conflicts=proceed   : dletes all records 
+{"query": {
+        "match_all": {}
+      }
+}
+
+
+PUT helson_twitter/_settings             => for changing the settings of the indices
+{
+  "index.mapping.total_fields.limit": 2000
+}
+
+
+{
+  "_index": "helson_twitter",
+  "_type": "tweet",
+  "_id": "gfgvO3EBmBN2c-s9TOmg",
+  "_version": 1,
+  "_seq_no": 213,
+  "_primary_term": 1,
+===============================================================================================================================
 Things to be checked:
 
 1. How to alter a topic for diff partitons after being created.
@@ -170,9 +204,77 @@ We can make this large so the broker would send the messages as soon as this lim
 9. Consumer offset commit strategy :
 ---------------------------------------
 HOw the consumer commits the offsets when the message is consumed
-enable.auto.commit = true (offsets are auto commited. Synchronous processing of batches.ie no new batches would be fetched untill we procesess the current one)
-enable.auto.commit => false(manual commit of offset)
+"""enable.auto.commit = true""" (offsets are auto commited. Synchronous processing of batches.ie no new batches would be polled(fetched) untill we procesess the current one)
+
+So u poll the record into record batches and do something Synchronous.So no new batches would be polled unlsess we process the existing batch.
+Here U let the consumers to commit the offsets (for all whatever has been done so far) for U every 5 sec (default) whenever U execute poll command.
+But this holds good only when U do the Synchronous processing.
+If U do something  Asynchronous processing then  the polling would e executed even before the previous batch got sucessfully processed.
+This would lead at-most-once behaviour where if there is any records meets error in processing, u may not be able to fetch them back since they have already been commited.
+
+while(true)
+{
+   List<Records> batch = consumer.poll(Durations.milliSeconds)
+   doSomethingSynchronous(bathc)
+   
+}
+
+Here we get the list of records of whatever is available as new.
+
+
+
+"""enable.auto.commit""" => false(manual commit of offsets)
+
+Always prefer manual auto commit = false
+while(true)
+{
+    batch += conusmer.poll(duration)
+	if (batch has considerable amount of records)
+	{
+	    then doSomthingAsynchronos(batch)
+		consumer.commitSync();
+	}
+		
+}		
+
+
+10. Bulk request processing:
+----------------------------------
+If processing single record at  a time is expensive then we can handle them as bulk request .
+E.q Sending single record to DB is expensive. Handle them as bulk request
+
+
 
   
+11. Consumer Offset Reset:
+-------------------------------
+"""auto.offset.reset""" = begining / latest / none
+
+data retention :   """offset.retension.minutes""" = 7 days or months
+
+
+12. HA for consumers
+--------------------------------
+Whenever the consumers poll(in poll thread) data from broker, they would also hit the consumer-coordinator(in another thread) whihc ensures the availability of the conusmer in the consumer group
+So polling often sends the Heart beat signal to coordinator often. So poll often
+
+"""Session.time.out""" = 10 seconds ( if consumer does not send heart beat in 10 seconds then that consumer is treated as down. Then the partitons are re balanced among the active consumers)
+
+"""heartbeat.interval.ms""" = 3 seconds
+How often HB must be sent to Co-ordinator
+
+In BigData processing  : Consumer might take long time to process the data. In those cases
+"""max.poll.interval.ms"""" =  5 minutes default
+
+The maximum amount if time between 2 poll request. If this time is execeed then the broker would kill that consumer from the gropu and rebalances the partition
+So always check for this config or increase it if the consumer processing would take a long time to process data.
+
+
+
+
+
+
+
+
 
 

@@ -16,6 +16,8 @@ import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.ConsumerRecords;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.common.serialization.StringDeserializer;
+import org.elasticsearch.action.bulk.BulkRequest;
+import org.elasticsearch.action.bulk.BulkResponse;
 import org.elasticsearch.action.index.IndexRequest;
 import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.RequestOptions;
@@ -28,7 +30,7 @@ import org.slf4j.LoggerFactory;
 
 public class Elastic_Consumer {
 
-	public static void main(String[] args) throws IOException {
+	public static void main(String[] args) throws IOException, InterruptedException {
 
 		Logger logger = LoggerFactory.getLogger(Elastic_Consumer.class.getName());
 		RestHighLevelClient client = createClient();
@@ -40,21 +42,30 @@ public class Elastic_Consumer {
 
 			ConsumerRecords<String, String> records = consumer.poll(Duration.ofMillis(10000));
 
+			logger.info("No of records in the current batch :" + records.count());
+
+			Thread.sleep(1000);
+
+			BulkRequest bulkRequest = new BulkRequest();
+
 			for (ConsumerRecord<String, String> record : records) {
 
 				String id_val = record.topic() + "_" + record.partition() + "_" + record.offset();
 
 				@SuppressWarnings("deprecation")
 				IndexRequest request = new IndexRequest("helson_twitter", "tweet").source(record.value(),
-						XContentType.JSON, id_val);
+						XContentType.JSON);
 
-				IndexResponse response = client.index(request, RequestOptions.DEFAULT);
-
-				String id = response.getId();
-
-				logger.info(id);
+				// Sending bulk request to Elastic Search
+				bulkRequest.add(request);
 
 			}
+
+			BulkResponse bulkResponse = client.bulk(bulkRequest, RequestOptions.DEFAULT);
+
+			logger.info("Commiting Offset");
+			consumer.commitSync();
+			logger.info("Offsets have been commited");
 		}
 	}
 
@@ -95,6 +106,8 @@ public class Elastic_Consumer {
 		prop.setProperty(ConsumerConfig.GROUP_ID_CONFIG, "Elastic-Consumer");
 
 		prop.setProperty(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "latest");
+		prop.setProperty(ConsumerConfig.ENABLE_AUTO_COMMIT_CONFIG, "false");
+		// prop.setProperty(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, "100");
 
 		// Create a consumer
 		KafkaConsumer<String, String> consumer = new KafkaConsumer<String, String>(prop);
